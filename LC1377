@@ -1,0 +1,51 @@
+# https://leetcode.cn/problems/frog-position-after-t-seconds/
+class Solution:
+    def frogPosition(self, n: int, edges: List[List[int]], t: int, target: int) -> float:
+        # len(edges) == 0 只有一种情况： 只有一个节点 1 
+        if len(edges) == 0:
+            return 1
+        # len(edges) > 1, 1 必然跟其他节点相连，同时 t >= 1, 第一步必然跳走，不能回头
+        if target == 1:
+            return 0
+        # 用亲节点表示法表示 统计每个节点孩子数，从target向上找路径 
+        child_count = {} 
+        children = [[] for i in range(n+1)]
+        for edge in edges:
+            child_count[edge[0]] = child_count.setdefault(edge[0], 0) + 1
+            child_count[edge[1]] = child_count.setdefault(edge[1], 0) + 1
+            children[edge[0]].append(edge[1])
+            children[edge[1]].append(edge[0])
+
+        # 使用 edges 建立出一棵树,实际上只需要找到一条路径 
+        path = [] 
+        used = [False] * (n+1)
+        def dfs(start):
+            path.append(start)
+            if start == target:
+                return True # 表示找到了答案，不用继续
+            for i in children[start]:
+                if i not in path and dfs(i) == True:
+                        return True
+            path.pop()
+            return False
+
+        dfs(1)
+        path.pop()
+        if len(path) > t or len(path) < t and child_count[target] > 1:
+            return 0 
+        ans = child_count[1]
+        for i in range(1, len(path)):
+            ans *= child_count[path[i]]-1 # -1 for 没有回头路 
+        ans = 1 / ans 
+        return ans 
+
+'''
+n = 8 
+edges = [[2,1],[3,2],[4,1],[5,1],[6,4],[7,1],[8,7]] 
+t = 7 
+target = 7 
+这个例子中，青蛙在 1 - 7 到达目标后，还有步数可用且还有位置可跳，那么它必须去
+能成功到达的例子：到了这一步后正好步数用完 或者 到达了叶子节点
+
+这里，从无向图中找到路径的dfs函数还可以
+'''
